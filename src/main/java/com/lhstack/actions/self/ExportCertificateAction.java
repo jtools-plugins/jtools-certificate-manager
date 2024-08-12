@@ -2,11 +2,8 @@ package com.lhstack.actions.self;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.lhstack.FileChooser;
 import com.lhstack.Icons;
 import com.lhstack.utils.NotifyUtils;
@@ -23,6 +20,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class ExportCertificateAction extends AnAction {
@@ -33,7 +31,7 @@ public class ExportCertificateAction extends AnAction {
     //0: 证书 1: 私钥
     private final Integer type;
 
-    public ExportCertificateAction(Integer type,String exportFileName,Supplier<String> pemSupplier, Project project) {
+    public ExportCertificateAction(Integer type, String exportFileName, Supplier<String> pemSupplier, Project project) {
         super(() -> "导出证书内容", Icons.EXPORT);
         this.pemSupplier = pemSupplier;
         this.project = project;
@@ -44,42 +42,30 @@ public class ExportCertificateAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
         String text = this.pemSupplier.get();
-        if(StringUtils.isBlank(text)) {
-            NotifyUtils.notify("导出证书内容为空,请先生成或者导入证书",project);
-            return ;
+        if (StringUtils.isBlank(text)) {
+            NotifyUtils.notify("导出证书内容为空,请先生成或者导入证书", project);
+            return;
         }
-        String dynamicExtensions = Objects.equals(type,0) ? "crt" : "key";
-        FileSaverDialog fileSaverDialog = FileChooser.chooseSaveFile("导出证书", project, "pem",dynamicExtensions);
-        VirtualFileWrapper virtualFileWrapper = fileSaverDialog.save(this.exportFileName);
-        if(virtualFileWrapper != null) {
-            VirtualFile virtualFile = null;
-            if (virtualFileWrapper.exists()) {
-                virtualFile = virtualFileWrapper.getVirtualFile();
-            }else {
-                virtualFile = virtualFileWrapper.getVirtualFile(true);
+        String dynamicExtensions = Objects.equals(type, 0) ? "crt" : "key";
+        FileChooser.chooseSaveFile("导出证书", this.exportFileName, project, virtualFile -> {
+            String extension = Optional.ofNullable(virtualFile.getExtension()).orElse("");
+            switch (extension) {
+                case "pem":
+                    Files.write(virtualFile.toNioPath(), text.getBytes(StandardCharsets.UTF_8));
+                    break;
+                case "crt":
+                    Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
+                    Files.write(virtualFile.toNioPath(), certificate.getEncoded());
+                    break;
+                case "key":
+                    PrivateKey privateKey = PemUtils.readPrivateKey(text);
+                    if (privateKey != null) {
+                        Files.write(virtualFile.toNioPath(), new PKCS8EncodedKeySpec(privateKey.getEncoded()).getEncoded());
+                    } else {
+                        NotifyUtils.notify("导出失败,不支持的私钥类型", project);
+                        FileUtil.delete(new File(virtualFile.getPresentableUrl()));
+                    }
             }
-            try{
-                switch (virtualFile.getExtension()){
-                    case "pem":
-                        Files.write(virtualFile.toNioPath(),text.getBytes(StandardCharsets.UTF_8));
-                        break;
-                    case "crt":
-                        Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
-                        Files.write(virtualFile.toNioPath(),certificate.getEncoded());
-                        break;
-                    case "key":
-                        PrivateKey privateKey = PemUtils.readPrivateKey(text);
-                        if(privateKey != null){
-                            Files.write(virtualFile.toNioPath(),new PKCS8EncodedKeySpec(privateKey.getEncoded()).getEncoded());
-                        }else {
-                            NotifyUtils.notify("导出失败,不支持的私钥类型",project);
-                            FileUtil.delete(new File(virtualFile.getPresentableUrl()));
-                        }
-                }
-            }catch (Throwable e){
-                FileUtil.delete(new File(virtualFile.getPresentableUrl()));
-                NotifyUtils.notify("导出证书失败,错误信息: " + e.getMessage(),project);
-            }
-        }
+        }, "pem", dynamicExtensions);
     }
 }

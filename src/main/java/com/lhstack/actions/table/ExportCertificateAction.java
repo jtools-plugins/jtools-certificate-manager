@@ -2,11 +2,8 @@ package com.lhstack.actions.table;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ListTableModel;
 import com.lhstack.FileChooser;
@@ -21,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.security.KeyStore;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class ExportCertificateAction extends AnAction {
@@ -47,32 +45,24 @@ public class ExportCertificateAction extends AnAction {
     public void actionPerformed(@NotNull AnActionEvent e) {
         List<Item> items = this.tableView.getSelectedObjects();
         if (CollectionUtils.isNotEmpty(items)) {
-            FileSaverDialog fileSaverDialog = FileChooser.chooseSaveFile("导出证书", project, "pem", "jks", "crt", "cer");
-            VirtualFileWrapper virtualFileWrapper;
-            VirtualFile virtualFile;
+            String saveFilename;
             if (items.size() == 1) {
                 Item item = items.get(0);
-                virtualFileWrapper = fileSaverDialog.save(item.getName());
+                saveFilename = item.getName();
             } else {
-                virtualFileWrapper = fileSaverDialog.save("multi-certificate");
+                saveFilename = "multi-certificate";
             }
-            if(virtualFileWrapper != null){
-                if(virtualFileWrapper.exists()){
-                    virtualFile = virtualFileWrapper.getVirtualFile();
-                }else {
-                    virtualFile = virtualFileWrapper.getVirtualFile(true);
-                }
+            FileChooser.chooseSaveFile("导出证书", saveFilename, project, virtualFile -> {
                 //如果没有文件,则创建
                 try {
-                    virtualFile = virtualFileWrapper.getVirtualFile(true);
-                    String extension = virtualFile.getExtension();
-                    FileUtils.writeByteArrayToFile(virtualFileWrapper.getFile(), CertificateUtils.export(keyStoreSupplier,passwordSupplier,items, extension));
+                    String extension = Optional.ofNullable(virtualFile.getExtension()).orElse("");
+                    FileUtils.writeByteArrayToFile(new File(virtualFile.getPresentableUrl()), CertificateUtils.export(keyStoreSupplier, passwordSupplier, items, extension));
                     NotifyUtils.notify("导出已选证书成功", project);
                 } catch (Throwable err) {
                     FileUtil.delete(new File(virtualFile.getPresentableUrl()));
                     NotifyUtils.notify("证书导出错误: " + err.getMessage(), project);
                 }
-            }
+            }, "pem", "jks", "crt", "cer");
 
         }
     }

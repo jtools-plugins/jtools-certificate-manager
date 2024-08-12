@@ -1,13 +1,10 @@
 package com.lhstack;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
@@ -32,7 +29,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -184,59 +180,35 @@ public class CertificateManagerView extends JPanel {
                 }
                 //不是新建
                 if (!isNew) {
-                    VirtualFile virtualFile = null;
-                    try {
-                        FileSaverDialog fileSaverDialog = FileChooser.chooseSaveFile("另存为证书", project, "jks");
-                        VirtualFileWrapper virtualFileWrapper = fileSaverDialog.save("newCertificate");
-                        if (virtualFileWrapper != null) {
-                            virtualFile = virtualFileWrapper.getVirtualFile(true);
-                            String password = JOptionPane.showInputDialog("请输入证书密码,不输入或者点取消则默认无密码");
-                            char[] newPassword;
-                            if (StringUtils.isNotBlank(password)) {
-                                newPassword = password.toCharArray();
-                            } else {
-                                newPassword = null;
-                            }
-                            String presentableUrl = virtualFile.getPresentableUrl();
-                            FileOutputStream fos = new FileOutputStream(presentableUrl);
-                            keyStore.store(fos, newPassword);
-                            fos.close();
-                            NotifyUtils.notify("另存为证书成功", project);
+                    FileChooser.chooseSaveFile("另存为证书", "newCertificate", project, virtualFile -> {
+                        String password = JOptionPane.showInputDialog("请输入证书密码,不输入或者点取消则默认无密码");
+                        char[] newPassword;
+                        if (StringUtils.isNotBlank(password)) {
+                            newPassword = password.toCharArray();
+                        } else {
+                            newPassword = null;
                         }
-
-                    } catch (Throwable err) {
-                        if (virtualFile != null) {
-                            FileUtil.delete(new File(virtualFile.getPresentableUrl()));
-                        }
-                        NotifyUtils.notify("另存为证书错误: " + err.getMessage(), project);
-                    }
+                        String presentableUrl = virtualFile.getPresentableUrl();
+                        FileOutputStream fos = new FileOutputStream(presentableUrl);
+                        keyStore.store(fos, newPassword);
+                        fos.close();
+                        NotifyUtils.notify("另存为证书成功", project);
+                    }, "jks");
                 } else {
-                    VirtualFile virtualFile = null;
-                    try {
-                        FileSaverDialog fileSaverDialog = FileChooser.chooseSaveFile("保存证书", project, "jks");
-                        VirtualFileWrapper virtualFileWrapper = fileSaverDialog.save("newCertificate");
-                        if (virtualFileWrapper != null) {
-                            virtualFile = virtualFileWrapper.getVirtualFile(true);
-                            String password = JOptionPane.showInputDialog("请输入证书密码,不输入或者点取消则默认无密码");
-                            char[] newPassword;
-                            if (StringUtils.isNotBlank(password)) {
-                                newPassword = password.toCharArray();
-                            } else {
-                                newPassword = null;
-                            }
-                            String presentableUrl = virtualFile.getPresentableUrl();
-                            FileOutputStream fos = new FileOutputStream(presentableUrl);
-                            keyStore.store(fos, newPassword);
-                            fos.close();
-                            NotifyUtils.notify("另存为证书成功", project);
+                    FileChooser.chooseSaveFile("另存为证书", "newCertificate", project, virtualFile -> {
+                        String password = JOptionPane.showInputDialog("请输入证书密码,不输入或者点取消则默认无密码");
+                        char[] newPassword;
+                        if (StringUtils.isNotBlank(password)) {
+                            newPassword = password.toCharArray();
+                        } else {
+                            newPassword = null;
                         }
-
-                    } catch (Throwable err) {
-                        if (virtualFile != null) {
-                            FileUtil.delete(new File(virtualFile.getPresentableUrl()));
-                        }
-                        NotifyUtils.notify("另存为证书错误: " + err.getMessage(), project);
-                    }
+                        String presentableUrl = virtualFile.getPresentableUrl();
+                        FileOutputStream fos = new FileOutputStream(presentableUrl);
+                        keyStore.store(fos, newPassword);
+                        fos.close();
+                        NotifyUtils.notify("另存为证书成功", project);
+                    }, "jks");
                 }
             }
         };
@@ -260,9 +232,7 @@ public class CertificateManagerView extends JPanel {
                         Messages.showErrorDialog(err.getMessage(), "保存证书错误");
                     }
                 } else {
-                    try {
-                        FileSaverDialog fileSaverDialog = FileChooser.chooseSaveFile("保存证书", project, "jks");
-                        VirtualFile virtualFile = fileSaverDialog.save("newCertificate").getVirtualFile(true);
+                    FileChooser.chooseSaveFile("保存证书", "newCertificate", project, virtualFile -> {
                         String password = JOptionPane.showInputDialog("请输入证书密码,不输入或者点取消则默认无密码");
                         if (StringUtils.isNotBlank(password)) {
                             passwordArray = password.toCharArray();
@@ -276,9 +246,7 @@ public class CertificateManagerView extends JPanel {
                         certificateVirtualFile = virtualFile;
                         isNew = false;
                         NotifyUtils.notify("证书保存成功", project);
-                    } catch (Throwable err) {
-                        NotifyUtils.notify("保存证书错误: " + err.getMessage(), project);
-                    }
+                    }, "jks");
                 }
             }
         };

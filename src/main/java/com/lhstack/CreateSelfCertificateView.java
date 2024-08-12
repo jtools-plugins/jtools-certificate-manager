@@ -9,13 +9,10 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBScrollPane;
@@ -98,33 +95,26 @@ public class CreateSelfCertificateView extends JPanel {
                     if (StringUtils.isAnyBlank(ca, caKey, certificate, certificateKey)) {
                         Messages.showErrorDialog("生成的证书不完整,无法导出,请检查你是否生成/导入了CA相关证书,通过CA生成了证书", "提示");
                     } else {
-                        try {
-                            FileSaverDialog fileSaverDialog = FileChooser.chooseSaveFile("证书导出", project, "zip");
-                            VirtualFileWrapper virtualFileWrapper = fileSaverDialog.save("certs.zip");
-                            if (virtualFileWrapper != null) {
-                                VirtualFile virtualFile = virtualFileWrapper.getVirtualFile(true);
-                                ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(virtualFile.getPath()));
-                                zipOutputStream.putNextEntry(new ZipEntry("ca.pem"));
-                                zipOutputStream.write(ca.getBytes(StandardCharsets.UTF_8));
-                                zipOutputStream.closeEntry();
+                        FileChooser.chooseSaveFile("证书导出", "certs.zip", project, virtualFile -> {
+                            ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(virtualFile.getPresentableUrl()));
+                            zipOutputStream.putNextEntry(new ZipEntry("ca.pem"));
+                            zipOutputStream.write(ca.getBytes(StandardCharsets.UTF_8));
+                            zipOutputStream.closeEntry();
 
-                                zipOutputStream.putNextEntry(new ZipEntry("ca-key.pem"));
-                                zipOutputStream.write(caKey.getBytes(StandardCharsets.UTF_8));
-                                zipOutputStream.closeEntry();
+                            zipOutputStream.putNextEntry(new ZipEntry("ca-key.pem"));
+                            zipOutputStream.write(caKey.getBytes(StandardCharsets.UTF_8));
+                            zipOutputStream.closeEntry();
 
-                                zipOutputStream.putNextEntry(new ZipEntry("certificate.pem"));
-                                zipOutputStream.write(certificate.getBytes(StandardCharsets.UTF_8));
-                                zipOutputStream.closeEntry();
+                            zipOutputStream.putNextEntry(new ZipEntry("certificate.pem"));
+                            zipOutputStream.write(certificate.getBytes(StandardCharsets.UTF_8));
+                            zipOutputStream.closeEntry();
 
-                                zipOutputStream.putNextEntry(new ZipEntry("certificate-key.pem"));
-                                zipOutputStream.write(certificateKey.getBytes(StandardCharsets.UTF_8));
-                                zipOutputStream.closeEntry();
-                                zipOutputStream.close();
-                                NotifyUtils.notify("导出证书成功", project);
-                            }
-                        } catch (Throwable err) {
-                            Messages.showErrorDialog(err.getMessage(), "导出证书出错");
-                        }
+                            zipOutputStream.putNextEntry(new ZipEntry("certificate-key.pem"));
+                            zipOutputStream.write(certificateKey.getBytes(StandardCharsets.UTF_8));
+                            zipOutputStream.closeEntry();
+                            zipOutputStream.close();
+                            NotifyUtils.notify("导出证书成功", project);
+                        }, "zip");
                     }
                 }
             }
@@ -134,7 +124,7 @@ public class CreateSelfCertificateView extends JPanel {
         exportJksButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(SwingUtilities.isLeftMouseButton(e)) {
+                if (SwingUtilities.isLeftMouseButton(e)) {
                     if (SwingUtilities.isLeftMouseButton(e)) {
                         String ca = languageTextFields.get("ca").getText();
                         String caKey = languageTextFields.get("ca-key").getText();
@@ -143,48 +133,41 @@ public class CreateSelfCertificateView extends JPanel {
                         if (StringUtils.isAnyBlank(ca, caKey, certificate, certificateKey)) {
                             Messages.showErrorDialog("生成的证书不完整,无法导出,请检查你是否生成/导入了CA相关证书,通过CA生成了证书", "提示");
                         } else {
-                            try {
-                                FileSaverDialog fileSaverDialog = FileChooser.chooseSaveFile("证书导出", project, "zip");
-                                VirtualFileWrapper virtualFileWrapper = fileSaverDialog.save("certs-jks.zip");
-                                if (virtualFileWrapper != null) {
-                                    String caKeyPassword = UUID.randomUUID().toString();
-                                    String caStorePassword = UUID.randomUUID().toString();
-                                    VirtualFile virtualFile = virtualFileWrapper.getVirtualFile(true);
-                                    ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(virtualFile.getPath()));
-                                    zipOutputStream.putNextEntry(new ZipEntry("ca.jks"));
-                                    Certificate certificateObj = PemUtils.readCertificate(ca);
-                                    PrivateKey privateKey = PemUtils.readPrivateKey(caKey);
-                                    KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
-                                    store.load(null, null);
-                                    store.setKeyEntry("ca",privateKey,caKeyPassword.toCharArray(),new Certificate[]{certificateObj});
-                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                    store.store(baos,caStorePassword.toCharArray());
-                                    zipOutputStream.write(baos.toByteArray());
-                                    zipOutputStream.closeEntry();
+                            FileChooser.chooseSaveFile("jks证书导出", "certs-jks.zip", project, virtualFile -> {
+                                String caKeyPassword = UUID.randomUUID().toString();
+                                String caStorePassword = UUID.randomUUID().toString();
+                                ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(virtualFile.getPresentableUrl()));
+                                zipOutputStream.putNextEntry(new ZipEntry("ca.jks"));
+                                Certificate certificateObj = PemUtils.readCertificate(ca);
+                                PrivateKey privateKey = PemUtils.readPrivateKey(caKey);
+                                KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
+                                store.load(null, null);
+                                store.setKeyEntry("ca", privateKey, caKeyPassword.toCharArray(), new Certificate[]{certificateObj});
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                store.store(baos, caStorePassword.toCharArray());
+                                zipOutputStream.write(baos.toByteArray());
+                                zipOutputStream.closeEntry();
 
-                                    String certificateKeyPassword = UUID.randomUUID().toString();
-                                    String certificateStorePassword = UUID.randomUUID().toString();
-                                    zipOutputStream.putNextEntry(new ZipEntry("certificate.jks"));
-                                    certificateObj = PemUtils.readCertificate(certificate);
-                                    privateKey = PemUtils.readPrivateKey(certificateKey);
-                                    store = KeyStore.getInstance(KeyStore.getDefaultType());
-                                    store.load(null, null);
-                                    store.setKeyEntry("certificate",privateKey,certificateKeyPassword.toCharArray(),new Certificate[]{certificateObj});
-                                    baos = new ByteArrayOutputStream();
-                                    store.store(baos,certificateStorePassword.toCharArray());
-                                    zipOutputStream.write(baos.toByteArray());
-                                    zipOutputStream.closeEntry();
+                                String certificateKeyPassword = UUID.randomUUID().toString();
+                                String certificateStorePassword = UUID.randomUUID().toString();
+                                zipOutputStream.putNextEntry(new ZipEntry("certificate.jks"));
+                                certificateObj = PemUtils.readCertificate(certificate);
+                                privateKey = PemUtils.readPrivateKey(certificateKey);
+                                store = KeyStore.getInstance(KeyStore.getDefaultType());
+                                store.load(null, null);
+                                store.setKeyEntry("certificate", privateKey, certificateKeyPassword.toCharArray(), new Certificate[]{certificateObj});
+                                baos = new ByteArrayOutputStream();
+                                store.store(baos, certificateStorePassword.toCharArray());
+                                zipOutputStream.write(baos.toByteArray());
+                                zipOutputStream.closeEntry();
 
-                                    zipOutputStream.putNextEntry(new ZipEntry("密码.txt"));
-                                    String passwordText = String.format("ca.jks私钥密码: %s\nca.jks存储密码: %s\ncertificate.jks私钥密码: %s\ncertificate.jks存储密码: %s",caKeyPassword,caStorePassword,certificateKeyPassword,certificateStorePassword);
-                                    zipOutputStream.write(passwordText.getBytes(StandardCharsets.UTF_8));
-                                    zipOutputStream.closeEntry();
-                                    zipOutputStream.close();
-                                    NotifyUtils.notify("导出证书成功", project);
-                                }
-                            } catch (Throwable err) {
-                                Messages.showErrorDialog(err.getMessage(), "导出证书出错");
-                            }
+                                zipOutputStream.putNextEntry(new ZipEntry("密码.txt"));
+                                String passwordText = String.format("ca.jks私钥密码: %s\nca.jks存储密码: %s\ncertificate.jks私钥密码: %s\ncertificate.jks存储密码: %s", caKeyPassword, caStorePassword, certificateKeyPassword, certificateStorePassword);
+                                zipOutputStream.write(passwordText.getBytes(StandardCharsets.UTF_8));
+                                zipOutputStream.closeEntry();
+                                zipOutputStream.close();
+                                NotifyUtils.notify("导出证书成功", project);
+                            }, "zip");
                         }
                     }
                 }
@@ -205,24 +188,24 @@ public class CreateSelfCertificateView extends JPanel {
         JBTabbedPane tabbedPane = new JBTabbedPane();
         tabbedPane.addTab("ca.pem", createTextFieldPanel("ca", state.getCaPem(), editorEx -> {
             editorEx.installPopupHandler(new DefaultContextMenuPopupHandler(
-                    new ShowDetailAction(state::getCaPem,project),
-                    new ExportCertificateAction(0,"ca",state::getCaPem,project)
+                    new ShowDetailAction(state::getCaPem, project),
+                    new ExportCertificateAction(0, "ca", state::getCaPem, project)
             ));
         }));
         tabbedPane.addTab("ca.key", createTextFieldPanel("ca-key", state.getCaKeyPem(), editorEx -> {
             editorEx.installPopupHandler(new DefaultContextMenuPopupHandler(
-                    new ExportCertificateAction(1,"ca-key",state::getCaKeyPem,project)
+                    new ExportCertificateAction(1, "ca-key", state::getCaKeyPem, project)
             ));
         }));
         tabbedPane.addTab("certificate.pem", createTextFieldPanel("certificate", state.getCertificatePem(), editorEx -> {
             editorEx.installPopupHandler(new DefaultContextMenuPopupHandler(
-                    new ShowDetailAction(state::getCertificatePem,project),
-                    new ExportCertificateAction(0,"certificate",state::getCertificatePem,project)
+                    new ShowDetailAction(state::getCertificatePem, project),
+                    new ExportCertificateAction(0, "certificate", state::getCertificatePem, project)
             ));
         }));
         tabbedPane.addTab("certificate.key", createTextFieldPanel("certificate-key", state.getCertificateKeyPem(), editorEx -> {
             editorEx.installPopupHandler(new DefaultContextMenuPopupHandler(
-                    new ExportCertificateAction(1,"certificate-key",state::getCertificateKeyPem,project)
+                    new ExportCertificateAction(1, "certificate-key", state::getCertificateKeyPem, project)
             ));
         }));
         return tabbedPane;
@@ -300,7 +283,6 @@ public class CreateSelfCertificateView extends JPanel {
                     } else {
                         try {
                             SelfSignConfig selfSignConfig = parseConfig(languageTextField.getText());
-                            SelfSignConfig.Certificate certificate = selfSignConfig.getCertificate();
                             SelfSignCertificateEntity entity = SelfSignCertificateHelper.genSelfCertificateFromCaPem(caPem, caKeyPem, selfSignConfig);
                             String certificatePem = PemUtils.toString(entity.getCertificate());
                             String certificateKeyPem = PemUtils.toString(entity.getCertificateKey());
