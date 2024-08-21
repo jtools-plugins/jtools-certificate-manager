@@ -1,14 +1,17 @@
 package com.lhstack;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.components.JBTextArea;
 import dev.coolrequest.tool.CoolToolPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CertificateManagerPanel implements CoolToolPanel {
 
@@ -32,7 +35,8 @@ public class CertificateManagerPanel implements CoolToolPanel {
             return panel;
         } catch (Throwable e) {
             JPanel jPanel = new JPanel(new BorderLayout());
-            jPanel.add(new JBTextArea(e.getMessage()), BorderLayout.CENTER);
+            String stackTrace = Arrays.stream(e.getStackTrace()).map(StackTraceElement::toString).collect(Collectors.joining("\n"));
+            jPanel.add(new JBScrollPane(new JBTextArea(e + "\n" + stackTrace)), BorderLayout.CENTER);
             return jPanel;
         }
     }

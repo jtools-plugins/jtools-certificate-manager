@@ -31,6 +31,7 @@ public final class ProjectState implements PersistentStateComponent<ProjectState
      */
     public static ProjectState getInstance(Project project) {
         return project.getService(ProjectState.class);
+//        return new ProjectState();
     }
 
     @Override
