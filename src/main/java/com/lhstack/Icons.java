@@ -25,7 +25,7 @@ public interface Icons {
 
     Icon ROOT = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/root.svg"));
 
-    Icon TEMPLATE = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/template.svg"));
+    Icon TEMPLATE = IconLoader.findIcon("icons/template.svg", Icons.class);
 
     Icon IMPORT2 = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/import2.svg"));
 

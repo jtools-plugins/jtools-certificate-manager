@@ -50,6 +50,12 @@ public class PluginImpl implements IPlugin {
         }
     }
 
+
+    @Override
+    public void closePanel(String projectHash) {
+        panels.remove(projectHash);
+    }
+
     @Override
     public String pluginName() {
         return "证书管理";
@@ -62,6 +68,6 @@ public class PluginImpl implements IPlugin {
 
     @Override
     public String pluginVersion() {
-        return "0.0.1";
+        return "v1.0.5";
     }
 }

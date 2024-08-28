@@ -1,13 +1,9 @@
 package com.lhstack;
 
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
 import java.util.function.Function;
 
 public class ItemColumn<T> extends ColumnInfo<Item, T> {
