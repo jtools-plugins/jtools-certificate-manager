@@ -1,5 +1,6 @@
 package com.lhstack;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.JBScrollPane;
@@ -18,6 +19,8 @@ public class PluginImpl implements IPlugin {
 
     private static final Map<String, JPanel> panels = new HashMap<>();
 
+    private static final Map<String, Disposable> disposables = new HashMap<>();
+
     @Override
     public Icon pluginIcon() {
         return IconLoader.findIcon("logo.svg", PluginImpl.class);
@@ -29,6 +32,12 @@ public class PluginImpl implements IPlugin {
     }
 
     @Override
+    public void unInstall() {
+        disposables.values().forEach(Disposable::dispose);
+        disposables.clear();
+    }
+
+    @Override
     public JComponent createPanel(Project project) {
         return panels.computeIfAbsent(project.getLocationHash(), key -> createViews(project));
     }
@@ -36,8 +45,10 @@ public class PluginImpl implements IPlugin {
     private JPanel createViews(Project project) {
         try {
             JBTabbedPane tabbedPane = new JBTabbedPane();
+            CreateSelfCertificateView createSelfCertificateView = new CreateSelfCertificateView(project);
+            disposables.put(project.getLocationHash(),createSelfCertificateView);
             tabbedPane.addTab("jks证书管理", new CertificateManagerView(project));
-            tabbedPane.addTab("创建自签证书", new CreateSelfCertificateView(project));
+            tabbedPane.addTab("创建自签证书", createSelfCertificateView);
             tabbedPane.addTab("Acme客户端", new AcmeClientView(project));
             JPanel panel = new JPanel(new BorderLayout());
             panel.add(tabbedPane, BorderLayout.CENTER);
@@ -54,6 +65,14 @@ public class PluginImpl implements IPlugin {
     @Override
     public void closePanel(String projectHash) {
         panels.remove(projectHash);
+    }
+
+    @Override
+    public void closeProject(String projectHash) {
+        Disposable disposable = disposables.remove(projectHash);
+        if(disposable != null) {
+            disposable.dispose();
+        }
     }
 
     @Override

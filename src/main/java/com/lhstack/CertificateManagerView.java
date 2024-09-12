@@ -79,6 +79,7 @@ public class CertificateManagerView extends JPanel {
         group.add(createReSaveCertificateAction());
         SimpleToolWindowPanel panel = new SimpleToolWindowPanel(true);
         ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("CertificateManager", group, true);
+        actionToolbar.setTargetComponent(panel);
         panel.setToolbar(actionToolbar.getComponent());
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(createMainPanel(), BorderLayout.CENTER);

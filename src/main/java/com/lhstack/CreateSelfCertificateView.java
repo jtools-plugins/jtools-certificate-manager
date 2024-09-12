@@ -1,10 +1,13 @@
 package com.lhstack;
 
 import com.google.gson.Gson;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -13,6 +16,8 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBScrollPane;
@@ -46,10 +51,8 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -57,12 +60,14 @@ import java.util.zip.ZipOutputStream;
 /**
  * 将证书内容以pem数据格式显示,不限于私钥,公钥等
  */
-public class CreateSelfCertificateView extends JPanel {
+public class CreateSelfCertificateView extends JPanel implements Disposable {
     private final Project project;
 
     private final Map<String, LanguageTextField> languageTextFields;
     private final ProjectState.State state;
     private String template;
+
+    private final List<Disposable> disposableList = new ArrayList<>();
 
     public CreateSelfCertificateView(Project project) {
         this.project = project;
@@ -218,9 +223,10 @@ public class CreateSelfCertificateView extends JPanel {
             protected @NotNull EditorEx createEditor() {
                 EditorEx editor = super.createEditor();
                 EditorSettings settings = editor.getSettings();
-                settings.setLineMarkerAreaShown(true);
-                settings.setLineNumbersShown(true);
+                settings.setLineMarkerAreaShown(false);
+                settings.setLineNumbersShown(false);
                 editorExConsumer.accept(editor);
+                disposableList.add(() -> EditorFactory.getInstance().releaseEditor(editor));
                 return editor;
             }
         };
@@ -239,16 +245,29 @@ public class CreateSelfCertificateView extends JPanel {
         actionGroup.add(createGenCaAction());
         actionGroup.add(createImportCaAction());
         actionGroup.add(genCertificateAction());
-
-        simpleToolWindowPanel.setToolbar(ActionManager.getInstance().createActionToolbar("SelfSignCertificate", actionGroup, false).getComponent());
+        ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("SelfSignCertificate", actionGroup, false);
+        actionToolbar.setTargetComponent(simpleToolWindowPanel);
+        simpleToolWindowPanel.setToolbar(actionToolbar.getComponent());
         //配置模块
         LanguageTextField languageTextField = new LanguageTextField(YAMLLanguage.INSTANCE, project, Optional.ofNullable(state.getConfigYaml()).orElse(""), false) {
             @Override
             protected @NotNull EditorEx createEditor() {
-                EditorEx editor = super.createEditor();
+                EditorEx editor = (EditorEx) EditorFactory.getInstance().createEditor(getDocument());
+                editor.setHighlighter(HighlighterFactory.createHighlighter(project,getFileType()));
+                ApplicationManager.getApplication().runReadAction(() -> {
+                    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
+                    if(psiFile != null){
+                        DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile,true);
+                    }
+                });
                 EditorSettings settings = editor.getSettings();
-                settings.setLineMarkerAreaShown(true);
+                settings.setLineMarkerAreaShown(false);
+                settings.setLineCursorWidth(1);
+                settings.setRightMargin(-1);
+                settings.setFoldingOutlineShown(true);
+                settings.setAutoCodeFoldingEnabled(true);
                 settings.setLineNumbersShown(true);
+                disposableList.add(() -> EditorFactory.getInstance().releaseEditor(editor));
                 return editor;
             }
         };
@@ -415,4 +434,8 @@ public class CreateSelfCertificateView extends JPanel {
     }
 
 
+    @Override
+    public void dispose() {
+        disposableList.forEach(Disposable::dispose);
+    }
 }
