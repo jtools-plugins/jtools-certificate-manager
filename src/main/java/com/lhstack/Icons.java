@@ -7,31 +7,31 @@ import javax.swing.*;
 public interface Icons {
 
 
-    Icon IMPORT = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/import.svg"));
+    Icon IMPORT = IconLoader.findIcon("icons/import.svg", Icons.class);
 
-    Icon DETAIL = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/detail.svg"));
+    Icon DETAIL = IconLoader.findIcon("icons/detail.svg", Icons.class);
 
-    Icon DELETE = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/delete.svg"));
+    Icon DELETE = IconLoader.findIcon("icons/delete.svg", Icons.class);
 
-    Icon EXPORT = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/export.svg"));
+    Icon EXPORT = IconLoader.findIcon("icons/export.svg", Icons.class);
 
-    Icon EMPTY_CERTIFICATE = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/empty_certificate.svg"));
+    Icon EMPTY_CERTIFICATE = IconLoader.findIcon("icons/empty_certificate.svg", Icons.class);
 
-    Icon ADD = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/add.svg"));
+    Icon ADD = IconLoader.findIcon("icons/add.svg", Icons.class);
 
-    Icon SAVE = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/save.svg"));
+    Icon SAVE = IconLoader.findIcon("icons/save.svg", Icons.class);
 
-    Icon RESAVE = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/resave.svg"));
+    Icon RESAVE = IconLoader.findIcon("icons/resave.svg", Icons.class);
 
-    Icon ROOT = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/root.svg"));
+    Icon ROOT = IconLoader.findIcon("icons/root.svg", Icons.class);
 
     Icon TEMPLATE = IconLoader.findIcon("icons/template.svg", Icons.class);
 
-    Icon IMPORT2 = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/import2.svg"));
+    Icon IMPORT2 = IconLoader.findIcon("icons/import2.svg", Icons.class);
 
-    Icon CERTIFICATE = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/certificate.svg"));
+    Icon CERTIFICATE = IconLoader.findIcon("icons/certificate.svg", Icons.class);
 
-    Icon SHOW = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/show.svg"));
+    Icon SHOW = IconLoader.findIcon("icons/show.svg", Icons.class);
 
-    Icon CERTIFICATE_CHAIN = IconLoader.findIcon(Icons.class.getClassLoader().getResource("icons/certificate_chain.svg"));
+    Icon CERTIFICATE_CHAIN = IconLoader.findIcon("icons/certificate_chain.svg", Icons.class);
 }

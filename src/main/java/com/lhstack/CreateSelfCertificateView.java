@@ -437,5 +437,6 @@ public class CreateSelfCertificateView extends JPanel implements Disposable {
     @Override
     public void dispose() {
         disposableList.forEach(Disposable::dispose);
+        disposableList.clear();
     }
 }

@@ -32,6 +32,7 @@ tasks.withType(JavaExec).configureEach {
 
 dependencies {
     implementation(fileTree("/libs"))
+    implementation files('C:/Users/lhstack/.ideaTools/sdk/sdk.jar')
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
