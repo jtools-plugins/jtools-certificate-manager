@@ -226,10 +226,20 @@ public class CreateSelfCertificateView extends JPanel implements Disposable {
                 settings.setLineMarkerAreaShown(false);
                 settings.setLineNumbersShown(false);
                 editorExConsumer.accept(editor);
-                disposableList.add(() -> EditorFactory.getInstance().releaseEditor(editor));
+
                 return editor;
             }
         };
+        disposableList.add(() -> {
+            Editor editor = languageTextField.getEditor();
+            if(editor != null){
+                try{
+                    EditorFactory.getInstance().releaseEditor(editor);
+                }catch (Throwable ignore){
+
+                }
+            }
+        });
         languageTextField.setEnabled(false);
         languageTextFields.put(name, languageTextField);
         return new JBScrollPane(languageTextField);
