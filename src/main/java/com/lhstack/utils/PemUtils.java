@@ -1,5 +1,6 @@
 package com.lhstack.utils;
 
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -30,6 +31,8 @@ public class PemUtils {
         Object o = parser.readObject();
         if(o instanceof PEMKeyPair){
             return CONVERTER.getPrivateKey(((PEMKeyPair) o).getPrivateKeyInfo());
+        }else if(o instanceof PrivateKeyInfo){
+            return CONVERTER.getPrivateKey((PrivateKeyInfo) o);
         }
         return null;
     }
