@@ -32,6 +32,7 @@ import com.lhstack.state.ProjectState;
 import com.lhstack.utils.NotifyUtils;
 import com.lhstack.utils.PemUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.jetbrains.annotations.NotNull;
@@ -361,6 +362,11 @@ public class CreateSelfCertificateView extends JPanel implements Disposable {
                                             PrivateKey privateKey = null;
                                             if (o instanceof PEMKeyPair) {
                                                 privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(((PEMKeyPair) o).getPrivateKeyInfo().getEncoded()));
+                                                caKeyPem = PemUtils.toString(privateKey);
+                                                caKey.setText(caKeyPem);
+                                            }else if(o instanceof PrivateKeyInfo){
+                                                PrivateKeyInfo privateKeyInfo = (PrivateKeyInfo) o;
+                                                privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateKeyInfo.getEncoded()));
                                                 caKeyPem = PemUtils.toString(privateKey);
                                                 caKey.setText(caKeyPem);
                                             }
