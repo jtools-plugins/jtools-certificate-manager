@@ -7,5 +7,5 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = 'certificate-manager'
+rootProject.name = 'jtools-certificate-manager'
 

@@ -3,6 +3,7 @@ package com.lhstack;
 import com.google.gson.Gson;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,7 +36,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.YAMLLanguage;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.swing.*;
@@ -51,8 +51,8 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -259,7 +259,14 @@ public class CreateSelfCertificateView extends JPanel implements Disposable {
         actionToolbar.setTargetComponent(simpleToolWindowPanel);
         simpleToolWindowPanel.setToolbar(actionToolbar.getComponent());
         //配置模块
-        LanguageTextField languageTextField = new LanguageTextField(YAMLLanguage.INSTANCE, project, Optional.ofNullable(state.getConfigYaml()).orElse(""), false) {
+        Language yamlLanguage = Language.findLanguageByID("yaml");
+        if(yamlLanguage == null){
+            yamlLanguage = Language.findLanguageByID("yml");
+        }
+        if(yamlLanguage == null){
+            yamlLanguage = PlainTextLanguage.INSTANCE;
+        }
+        LanguageTextField languageTextField = new LanguageTextField(yamlLanguage, project, Optional.ofNullable(state.getConfigYaml()).orElse(""), false) {
             @Override
             protected @NotNull EditorEx createEditor() {
                 EditorEx editor = (EditorEx) EditorFactory.getInstance().createEditor(getDocument());

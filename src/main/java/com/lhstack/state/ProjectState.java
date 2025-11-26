@@ -1,26 +1,16 @@
 package com.lhstack.state;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "data", storages = {@Storage("CoolRequestCertificateManager.xml")})
-@Service
 public final class ProjectState implements PersistentStateComponent<ProjectState.State> {
 
-    private @NotNull ProjectState.State state = new State();
+    private ProjectState.State state;
 
-    /**
-     * 全局
-     *
-     * @return
-     */
-    public static ProjectState getInstance() {
-        return ApplicationManager.getApplication().getService(ProjectState.class);
+    public ProjectState(Project project) {
+        state = new State(PropertiesComponent.getInstance(project));
     }
 
     /**
@@ -30,8 +20,7 @@ public final class ProjectState implements PersistentStateComponent<ProjectState
      * @return
      */
     public static ProjectState getInstance(Project project) {
-        return project.getService(ProjectState.class);
-//        return new ProjectState();
+        return new ProjectState(project);
     }
 
     @Override
@@ -46,58 +35,56 @@ public final class ProjectState implements PersistentStateComponent<ProjectState
 
     public static class State {
 
-        private String configYaml;
+        private static final String KEY_PREFIX = "JTools.Certificate.Manager.";
 
-        private String caPem;
+        private final PropertiesComponent propertiesComponent;
 
-        private String caKeyPem;
-
-        private String certificatePem;
-
-        private String certificateKeyPem;
+        public State(PropertiesComponent propertiesComponent) {
+            this.propertiesComponent = propertiesComponent;
+        }
 
         public String getCaPem() {
-            return caPem;
+            return propertiesComponent.getValue(KEY_PREFIX + "caPem");
         }
 
         public State setCaPem(String caPem) {
-            this.caPem = caPem;
+            propertiesComponent.setValue(KEY_PREFIX + "caPem", caPem);
             return this;
         }
 
         public String getCaKeyPem() {
-            return caKeyPem;
+            return propertiesComponent.getValue(KEY_PREFIX + "caKeyPem");
         }
 
         public State setCaKeyPem(String caKeyPem) {
-            this.caKeyPem = caKeyPem;
+            this.propertiesComponent.setValue(KEY_PREFIX + "caKeyPem", caKeyPem);
             return this;
         }
 
         public String getCertificatePem() {
-            return certificatePem;
+            return this.propertiesComponent.getValue(KEY_PREFIX + "certificatePem");
         }
 
         public State setCertificatePem(String certificatePem) {
-            this.certificatePem = certificatePem;
+            this.propertiesComponent.setValue(KEY_PREFIX + "certificatePem", certificatePem);
             return this;
         }
 
         public String getCertificateKeyPem() {
-            return certificateKeyPem;
+            return this.propertiesComponent.getValue(KEY_PREFIX + "certificateKeyPem");
         }
 
         public State setCertificateKeyPem(String certificateKeyPem) {
-            this.certificateKeyPem = certificateKeyPem;
+            this.propertiesComponent.setValue(KEY_PREFIX + "certificateKeyPem", certificateKeyPem);
             return this;
         }
 
         public String getConfigYaml() {
-            return configYaml;
+            return this.propertiesComponent.getValue(KEY_PREFIX + "configYaml");
         }
 
         public void setConfigYaml(String configYaml) {
-            this.configYaml = configYaml;
+            this.propertiesComponent.setValue(KEY_PREFIX + "configYaml", configYaml);
         }
     }
 }

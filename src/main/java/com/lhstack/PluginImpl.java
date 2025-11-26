@@ -66,14 +66,9 @@ public class PluginImpl implements IPlugin {
         }
     }
 
-
-    @Override
-    public void closePanel(String projectHash) {
-        panels.remove(projectHash);
-    }
-
     @Override
     public void closeProject(String projectHash) {
+        panels.remove(projectHash);
         Disposable disposable = disposables.remove(projectHash);
         if(disposable != null) {
             disposable.dispose();
@@ -92,6 +87,6 @@ public class PluginImpl implements IPlugin {
 
     @Override
     public String pluginVersion() {
-        return "v1.0.5";
+        return "v2.0.1";
     }
 }
