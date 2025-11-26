@@ -87,6 +87,6 @@ public class PluginImpl implements IPlugin {
 
     @Override
     public String pluginVersion() {
-        return "v2.0.1";
+        return "v2.0.2";
     }
 }
