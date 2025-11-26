@@ -38,11 +38,6 @@ public class PluginImpl implements IPlugin {
     }
 
     @Override
-    public boolean installRestart() {
-        return true;
-    }
-
-    @Override
     public JComponent createPanel(Project project) {
         return panels.computeIfAbsent(project.getLocationHash(), key -> createViews(project));
     }
