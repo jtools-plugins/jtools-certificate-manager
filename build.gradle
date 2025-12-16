@@ -25,7 +25,6 @@ tasks.withType(JavaCompile).configureEach {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
     options.encoding = "UTF-8"
-    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
 tasks.withType(JavaExec).configureEach {
