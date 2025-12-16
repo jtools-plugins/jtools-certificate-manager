@@ -2,25 +2,21 @@ package com.lhstack.actions.table;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.LanguageTextField;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ListTableModel;
 import com.lhstack.Icons;
 import com.lhstack.Item;
+import com.lhstack.components.TextFieldDialog;
+import com.lhstack.utils.NotifyUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import java.security.cert.X509Certificate;
 import java.util.List;
 
 public class ShowDetailAction extends AnAction {
 
     private final TableView<Item> tableView;
-
     private final ListTableModel<Item> models;
     private final Project project;
 
@@ -33,36 +29,46 @@ public class ShowDetailAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        JDialog dialog = new JDialog();
-        dialog.setModal(true);
-        dialog.setSize(800, 600);
-        dialog.setLocationRelativeTo(null);
-        LanguageTextField languageTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, project, "", false) {
-            @Override
-            protected @NotNull EditorEx createEditor() {
-                EditorEx editor = super.createEditor();
-                EditorSettings settings = editor.getSettings();
-                settings.setLineMarkerAreaShown(true);
-                settings.setLineNumbersShown(true);
-                return editor;
-            }
-        };
         List<Item> items = this.tableView.getSelectedObjects();
-        if (!items.isEmpty()) {
-            Item firstItem = items.get(0);
-            dialog.setTitle(String.format("%s %s %s", firstItem.getName(), firstItem.getType(), firstItem.getAlgorithm()));
-            StringBuilder sb = new StringBuilder();
-            for (Item item : items) {
-                sb.append(String.format("证书名称: %s\r\n", item.getName()));
-                sb.append(String.format("证书类型: %s\r\n", item.getType()));
-                sb.append(String.format("证书算法: %s\r\n", item.getAlgorithm()));
-                sb.append(String.format("证书内容: \r\n%s\r\n\r\n", item.getCertificate().toString()));
-            }
-            languageTextField.setText(sb.toString());
-            languageTextField.setEnabled(false);
-            dialog.getContentPane().add(new JBScrollPane(languageTextField));
-            dialog.setVisible(true);
+        if (items.isEmpty()) {
+            NotifyUtils.notifyWarning("请先选择要查看的证书", project);
+            return;
         }
 
+        Item firstItem = items.get(0);
+        String title = String.format("证书详情 - %s", firstItem.getName());
+        StringBuilder sb = new StringBuilder();
+
+        for (Item item : items) {
+            sb.append("═══════════════════════════════════════════════════════════════\n");
+            sb.append(String.format("证书别名: %s\n", item.getName()));
+            sb.append(String.format("证书类型: %s\n", item.getType()));
+            sb.append(String.format("加密算法: %s\n", item.getAlgorithm()));
+            sb.append(String.format("证书状态: %s\n", item.getStatus()));
+
+            if (item.getCertificate() instanceof X509Certificate) {
+                X509Certificate x509 = (X509Certificate) item.getCertificate();
+                sb.append("───────────────────────────────────────────────────────────────\n");
+                sb.append(String.format("主题(Subject): %s\n", x509.getSubjectX500Principal().getName()));
+                sb.append(String.format("颁发者(Issuer): %s\n", x509.getIssuerX500Principal().getName()));
+                sb.append(String.format("序列号: %s\n", x509.getSerialNumber().toString(16).toUpperCase()));
+                sb.append(String.format("签名算法: %s\n", x509.getSigAlgName()));
+                sb.append(String.format("版本: V%d\n", x509.getVersion()));
+                sb.append(String.format("生效时间: %s\n", item.getNotBeforeFormatted()));
+                sb.append(String.format("过期时间: %s\n", item.getNotAfterFormatted()));
+
+                // 公钥信息
+                sb.append("───────────────────────────────────────────────────────────────\n");
+                sb.append(String.format("公钥算法: %s\n", x509.getPublicKey().getAlgorithm()));
+                sb.append(String.format("公钥格式: %s\n", x509.getPublicKey().getFormat()));
+            }
+
+            sb.append("───────────────────────────────────────────────────────────────\n");
+            sb.append("完整证书信息:\n");
+            sb.append(item.getCertificate().toString());
+            sb.append("\n\n");
+        }
+
+        new TextFieldDialog(title, sb.toString(), project).setVisible(true);
     }
 }

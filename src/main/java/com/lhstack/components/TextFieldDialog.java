@@ -9,26 +9,73 @@ import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class TextFieldDialog extends JDialog {
 
+    private final String content;
+
     public TextFieldDialog(String title, String text, Project project) {
+        this.content = text;
         this.setTitle(title);
         this.setModal(true);
-        this.setSize(800, 600);
+        this.setSize(900, 650);
         this.setLocationRelativeTo(null);
-        LanguageTextField languageTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, project, text,false) {
+        this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+
+        LanguageTextField languageTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, project, text, false) {
             @Override
             protected @NotNull EditorEx createEditor() {
                 EditorEx editor = super.createEditor();
                 EditorSettings settings = editor.getSettings();
                 settings.setLineMarkerAreaShown(true);
                 settings.setLineNumbersShown(true);
+                settings.setUseSoftWraps(true);
+                settings.setFoldingOutlineShown(true);
                 return editor;
             }
         };
         languageTextField.setEnabled(false);
-        JBScrollPane scrollPane = new JBScrollPane(languageTextField);
-        this.setContentPane(scrollPane);
+        mainPanel.add(new JBScrollPane(languageTextField), BorderLayout.CENTER);
+
+        // 底部按钮面板
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton copyButton = new JButton("复制内容");
+        copyButton.addActionListener(e -> copyToClipboard());
+        JButton closeButton = new JButton("关闭");
+        closeButton.addActionListener(e -> dispose());
+        buttonPanel.add(copyButton);
+        buttonPanel.add(closeButton);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        this.setContentPane(mainPanel);
+
+        // ESC键关闭
+        getRootPane().registerKeyboardAction(
+                e -> dispose(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+
+        // 窗口关闭时释放资源
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                // 清理资源
+            }
+        });
+    }
+
+    private void copyToClipboard() {
+        if (content != null && !content.isEmpty()) {
+            Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .setContents(new StringSelection(content), null);
+        }
     }
 }

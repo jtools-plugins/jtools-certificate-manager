@@ -1,23 +1,61 @@
-# RSA,EC,DSA
+# ============================================
+# 自签名证书配置模板
+# ============================================
+
+# 加密算法: RSA, EC, DSA
+# 推荐使用 EC (椭圆曲线) 或 RSA
 algorithm: EC
+
+# CA根证书配置
 ca:
-  # CN=自签CA证书名称,L=北京市,ST=北京,C=中国,OU=IT部门
-  dn: CN=Self Certificate CA
-  validityYear: 300 #ca证书有效期 300年
-  #初始化长度
+  # DN (Distinguished Name) 格式:
+  # CN=通用名称, O=组织, OU=部门, L=城市, ST=省份, C=国家代码
+  dn: CN=My Root CA,O=My Organization,L=Beijing,ST=Beijing,C=CN
+  
+  # CA证书有效期(年)
+  validityYear: 10
+  
+  # 密钥长度
+  # RSA推荐: 2048, 4096
+  # EC推荐: 256, 384
   initializeSize: 256
-  #签名算法 SHA256withECDSA , SHA256withRSA
+  
+  # 签名算法
   signatureAlgorithm: SHA256withECDSA
+
+# 服务器证书配置
 certificate:
-  # CN=自签证书名称,L=北京市,ST=北京,C=中国,OU=IT部门
-  dn: CN=Self Certificate Name
-  # 信任的域名或者ip
-  hosts: []
-  validityYear: 300
+  # 服务器证书DN
+  dn: CN=localhost,O=My Organization,L=Beijing,ST=Beijing,C=CN
+  
+  # 信任的域名和IP列表
+  # 支持通配符域名,如: *.example.com
+  hosts:
+    - localhost
+    - 127.0.0.1
+    - "*.local"
+  
+  # 证书有效期(年)
+  validityYear: 1
+  
+  # 密钥长度
   initializeSize: 256
-  # 签名算法 SHA256withECDSA , SHA256withRSA
+  
+  # 签名算法
   signatureAlgorithm: SHA256withECDSA
-# 以下是支持的算法以及算法对应的签名算法
-# RSA: SHA1withRSA,SHA256withRSA,SHA512withRSA,SHA256withRSAEncryption
-# DSA: SHA1withDSA, SHA256withDSA
-# EC: SHA1withECDSA, SHA256withECDSA, SHA384withECDSA
+
+# ============================================
+# 算法参考
+# ============================================
+# RSA算法:
+#   - 签名算法: SHA1withRSA, SHA256withRSA, SHA512withRSA
+#   - 密钥长度: 2048, 3072, 4096
+#
+# EC(椭圆曲线)算法:
+#   - 签名算法: SHA256withECDSA, SHA384withECDSA, SHA512withECDSA
+#   - 密钥长度: 256, 384, 521
+#
+# DSA算法:
+#   - 签名算法: SHA1withDSA, SHA256withDSA
+#   - 密钥长度: 1024, 2048, 3072
+# ============================================
